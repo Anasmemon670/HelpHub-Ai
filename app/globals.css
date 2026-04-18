@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #F5F5F0;
+  --foreground: #1F2937;
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  --dark-card: #3D4F4F;
+  --dark-card-foreground: #FFFFFF;
+  --primary: #2D8A6F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8E8E0;
+  --secondary-foreground: #1F2937;
+  --muted: #6B7280;
+  --muted-foreground: #9CA3AF;
+  --accent: #F5D76E;
+  --accent-foreground: #1F2937;
+  --border: #E5E5E0;
+  --input: #FFFFFF;
+  --ring: #2D8A6F;
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[#F5F5F0] text-foreground antialiased;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
