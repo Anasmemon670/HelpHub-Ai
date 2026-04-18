@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { addRequest, getCurrentUserId, useAppData } from '@/lib/app-store'
 import { analyzeRequestText } from '@/lib/ai-rules'
+import { analyzeRequestRemote } from '@/lib/remote-client'
 
 interface RequestModalProps {
   isOpen: boolean
@@ -24,9 +25,10 @@ export function RequestModal({ isOpen, onClose }: RequestModalProps) {
 
   if (!isOpen) return null
 
-  const applyAiFromText = () => {
+  const applyAiFromText = async () => {
     const combined = `${formData.title}\n${formData.description}`
-    const ai = analyzeRequestText(combined)
+    const remote = await analyzeRequestRemote(combined)
+    const ai = remote ?? analyzeRequestText(combined)
     setFormData((prev) => ({
       ...prev,
       category: ai.category,

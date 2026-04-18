@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   addChatMessage,
+  fetchMessagesForRequest,
   ingestIncomingMessage,
   markCanHelp,
   markSolved,
@@ -58,6 +59,11 @@ export default function RequestDetailPage() {
   useEffect(() => {
     setHasMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!hasMounted || !id) return
+    void fetchMessagesForRequest(id)
+  }, [hasMounted, id])
 
   if (!req) {
     return (

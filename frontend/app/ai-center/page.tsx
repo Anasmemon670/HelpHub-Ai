@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Sparkles, Zap, Brain, Target, MessageSquare, TrendingUp } from 'lucide-react'
 import { analyzeRequestText } from '@/lib/ai-rules'
 import { getStats, useAppData } from '@/lib/app-store'
+import { analyzeRequestRemote } from '@/lib/remote-client'
 
 const aiFeatures = [
   {
@@ -45,13 +46,14 @@ export default function AICenterPage() {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!demoText.trim()) return
 
     setIsAnalyzing(true)
 
-    window.setTimeout(() => {
-      const ai = analyzeRequestText(demoText)
+    try {
+      const remote = await analyzeRequestRemote(demoText)
+      const ai = remote ?? analyzeRequestText(demoText)
       const tags = ai.tags.length ? ai.tags.join(', ') : 'Add more detail for stronger tags'
       setAiSuggestion(
         `Based on your request, I suggest:\n\n` +
@@ -60,8 +62,9 @@ export default function AICenterPage() {
           `• Suggested Tags: ${tags}\n\n` +
           `Tip: Consider adding specific browser or device information to help helpers reproduce your issue faster.`
       )
+    } finally {
       setIsAnalyzing(false)
-    }, 400)
+    }
   }
 
   return (

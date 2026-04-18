@@ -8,7 +8,7 @@ Express.js REST API with MongoDB (Atlas or local) for the Helplytics AI communit
 
    - `MONGODB_URI` — connection string from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (or `mongodb://127.0.0.1:27017/helplytics` for local MongoDB).
    - `JWT_SECRET` — long random string for signing tokens.
-   - `CORS_ORIGIN` — your Next.js origin (default `http://localhost:3000`).
+   - `CORS_ORIGIN` — your Next.js origin. Production: `https://help-hub-seven.vercel.app` (append `,http://localhost:3000` for local frontend against deployed API).
 
 2. Install and run:
 

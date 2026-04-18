@@ -16,6 +16,7 @@ const adminRoutes = require('./routes/admin')
 const analyticsRoutes = require('./routes/analytics')
 
 const app = express()
+// Comma-separated origins; set on Vercel to https://help-hub-seven.vercel.app (and localhost for dev).
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000'
 const httpServer = http.createServer(app)
 const io = new Server(httpServer, {

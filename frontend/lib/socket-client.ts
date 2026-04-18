@@ -1,7 +1,7 @@
 'use client'
 
 import { io, type Socket } from 'socket.io-client'
-import { getJwt } from './remote-client'
+import { getJwt } from './api-client'
 import type { Message } from './types'
 
 let socketInstance: Socket | null = null

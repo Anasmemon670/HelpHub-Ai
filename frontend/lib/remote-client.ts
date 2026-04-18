@@ -1,38 +1,22 @@
 /**
- * Optional API client — when NEXT_PUBLIC_API_URL is unset, nothing here runs.
+ * Domain API helpers — when NEXT_PUBLIC_API_URL is unset, callers use offline localStorage logic.
  * Auth passwords for API accounts are stored locally (same browser) for email-only login UX.
  */
 
+import { apiFetch, isApiConfigured } from './api-client'
+import type { AiAnalysisResult } from './ai-rules'
 import type {
   AnalyticsOverview,
   AppData,
   HelpRequest,
+  Message,
   NotificationItem,
   User,
   UrgencyLevel,
 } from './types'
 
-function baseUrl(): string {
-  const b = process.env.NEXT_PUBLIC_API_URL || ''
-  return b.replace(/\/$/, '')
-}
-
-export function isApiConfigured(): boolean {
-  return typeof window !== 'undefined' && !!baseUrl()
-}
-
-const JWT_KEY = 'helphub_jwt'
-
-export function getJwt(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(JWT_KEY)
-}
-
-export function setJwt(token: string | null): void {
-  if (typeof window === 'undefined') return
-  if (token) localStorage.setItem(JWT_KEY, token)
-  else localStorage.removeItem(JWT_KEY)
-}
+export { getJwt, setJwt, isApiConfigured, getApiBaseUrl } from './api-client'
+export { JWT_KEY }
 
 function pwKey(email: string): string {
   return `helphub_api_pw_${email.toLowerCase().trim()}`
@@ -98,23 +82,15 @@ function normalizeNotification(n: Record<string, unknown>): NotificationItem {
   }
 }
 
-async function apiFetch<T>(path: string, init: RequestInit = {}, withAuth = true): Promise<T> {
-  const url = `${baseUrl()}${path}`
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(init.headers as Record<string, string>),
+function normalizeMessage(m: Record<string, unknown>): Message {
+  return {
+    id: String(m.id),
+    requestId: String(m.requestId ?? ''),
+    authorId: String(m.authorId ?? ''),
+    authorName: String(m.authorName ?? ''),
+    body: String(m.body ?? ''),
+    createdAt: String(m.createdAt ?? new Date().toISOString()),
   }
-  if (withAuth) {
-    const j = getJwt()
-    if (j) headers.Authorization = `Bearer ${j}`
-  }
-  const res = await fetch(url, { ...init, headers })
-  const text = await res.text()
-  if (!res.ok) {
-    throw new Error(text || res.statusText)
-  }
-  if (!text) return {} as T
-  return JSON.parse(text) as T
 }
 
 export async function pullRemoteState(): Promise<AppData | null> {
@@ -303,4 +279,41 @@ export async function markNotificationsReadRemote(input: {
 
 export async function getAnalyticsOverviewRemote(): Promise<AnalyticsOverview> {
   return apiFetch<AnalyticsOverview>('/api/analytics/overview')
+}
+
+/** Public read — no auth required on server; omit JWT to match backend. */
+export async function getMessagesForRequestRemote(requestId: string): Promise<Message[]> {
+  const res = await apiFetch<{ messages: Record<string, unknown>[] }>(
+    `/api/messages/${requestId}`,
+    {},
+    false
+  )
+  return (res.messages || []).map((m) => normalizeMessage(m))
+}
+
+/**
+ * Server rule-based AI (POST /api/ai/analyze). Returns null on failure — use local ai-rules fallback.
+ */
+export async function analyzeRequestRemote(text: string): Promise<AiAnalysisResult | null> {
+  if (!isApiConfigured()) return null
+  try {
+    const res = await apiFetch<{ category: string; urgency: string; tags: string[] }>(
+      '/api/ai/analyze',
+      {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      },
+      false
+    )
+    const u = res.urgency
+    const urgency: AiAnalysisResult['urgency'] =
+      u === 'High' || u === 'Low' || u === 'Medium' ? u : 'Medium'
+    return {
+      category: String(res.category ?? 'Other'),
+      urgency,
+      tags: Array.isArray(res.tags) ? res.tags : [],
+    }
+  } catch {
+    return null
+  }
 }

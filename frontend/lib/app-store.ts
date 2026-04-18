@@ -9,6 +9,7 @@ import {
   createRequestRemote,
   getApiPassword,
   getJwt,
+  getMessagesForRequestRemote,
   getNotificationsRemote,
   helpRequestRemote,
   isApiConfigured,
@@ -634,6 +635,34 @@ export async function addRequest(input: {
 
 export function getRequestById(id: string): HelpRequest | undefined {
   return load().requests.find((r) => r.id === id)
+}
+
+/** Merge chat history from GET /api/messages/:requestId (Mongo-backed). No-op offline / non-ObjectId ids. */
+export async function fetchMessagesForRequest(requestId: string): Promise<void> {
+  if (!isApiConfigured() || !looksLikeMongoId(requestId)) return
+  try {
+    const messages = await getMessagesForRequestRemote(requestId)
+    if (!messages.length) return
+    const data = load()
+    const req = data.requests.find((r) => r.id === requestId)
+    if (!req) return
+    const existingIds = new Set(req.messages.map((m) => m.id))
+    let changed = false
+    for (const m of messages) {
+      if (!existingIds.has(m.id)) {
+        req.messages.push(m)
+        existingIds.add(m.id)
+        changed = true
+      }
+    }
+    if (changed) {
+      req.messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      persist()
+      emit()
+    }
+  } catch (e) {
+    console.warn('[Helplytics] fetchMessagesForRequest failed', e)
+  }
 }
 
 function markCanHelpLocal(requestId: string, helperId: string): boolean {
